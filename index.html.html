@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가격 전략 대시보드</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #e8e8e8;
+    --text-dim: #888;
+    --green: #4ade80;
+    --orange: #fb923c;
+    --red: #f87171;
+    --yellow: #facc15;
+    --blue: #60a5fa;
+    --purple: #c084fc;
+    --accent: #4ade80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .header {
+    margin-bottom: 32px;
+  }
+
+  .header h1 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .section-header .weight {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .section-header .cost-info {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .section-header .cost-info span {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .table-wrapper {
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  thead th:not(:first-child) {
+    text-align: right;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+  }
+
+  td {
+    padding: 14px 14px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  td:not(:first-child) {
+    text-align: right;
+  }
+
+  .price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .cost {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .margin-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--orange);
+  }
+
+  /* 시장 위치 배지 */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .badge-red {
+    background: rgba(248,113,113,0.15);
+    color: #f87171;
+    border: 1px solid rgba(248,113,113,0.3);
+  }
+
+  .badge-orange {
+    background: rgba(251,146,60,0.15);
+    color: #fb923c;
+    border: 1px solid rgba(251,146,60,0.3);
+  }
+
+  .badge-yellow {
+    background: rgba(250,204,21,0.15);
+    color: #facc15;
+    border: 1px solid rgba(250,204,21,0.3);
+  }
+
+  .badge-blue {
+    background: rgba(96,165,250,0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(96,165,250,0.3);
+  }
+
+  /* 마진율 바 */
+  .margin-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .margin-bar-wrap {
+    width: 70px;
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .margin-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  .bar-low    { background: var(--red); }
+  .bar-mid    { background: var(--orange); }
+  .bar-high   { background: var(--yellow); }
+  .bar-best   { background: var(--green); }
+
+  .margin-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 42px;
+    text-align: right;
+  }
+
+  /* 전략 태그 */
+  .strategy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .s-caution {
+    background: rgba(248,113,113,0.12);
+    color: #f87171;
+  }
+
+  .s-compete {
+    background: rgba(96,165,250,0.12);
+    color: #60a5fa;
+  }
+
+  .s-recommend {
+    background: rgba(74,222,128,0.15);
+    color: #4ade80;
+    border: 1px solid rgba(74,222,128,0.3);
+  }
+
+  .s-margin {
+    background: rgba(250,204,21,0.12);
+    color: #facc15;
+  }
+
+  .s-bait {
+    background: rgba(192,132,252,0.12);
+    color: #c084fc;
+  }
+
+  .s-multi {
+    background: rgba(251,146,60,0.12);
+    color: #fb923c;
+  }
+
+  .star { font-size: 12px; }
+
+  /* 요약 카드 */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .summary-card .label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .summary-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .summary-card .sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .c-green { color: var(--green); }
+  .c-orange { color: var(--orange); }
+  .c-blue { color: var(--blue); }
+  .c-yellow { color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Pricing Strategy Dashboard</h1>
+  <h2>가격 전략 분석표</h2>
+</div>
+
+<!-- 요약 -->
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="label">1kg 원가</div>
+    <div class="value c-orange">6,200원</div>
+    <div class="sub">OEM 3,600 + 택배 2,600</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">2kg 원가</div>
+    <div class="value c-orange">9,800원</div>
+    <div class="sub">OEM 7,200 + 택배 2,600</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">1kg 추천가</div>
+    <div class="value c-green">9,900원</div>
+    <div class="sub">마진율 37.3%</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">전체 SKU</div>
+    <div class="value c-blue">7개</div>
+    <div class="sub">1kg 4개 · 2kg 3개</div>
+  </div>
+</div>
+
+<!-- 1kg 섹션 -->
+<div class="section">
+  <div class="section-header">
+    <span class="weight">1kg</span>
+    <span class="cost-info">원가 <span>6,200원</span> &nbsp;·&nbsp; OEM <span>3,600원</span> + 택배 <span>2,600원</span></span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>판매가</th>
+          <th>시장 위치</th>
+          <th>총 원가</th>
+          <th>1차 마진</th>
+          <th>마진율</th>
+          <th>전략</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="price">7,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-red">하위 4.6% · 초저가 영역</span></td>
+          <td><span class="cost">6,200원</span></td>
+          <td><span class="margin-val">1,700원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-low" style="width:21.5%"></div></div>
+              <span class="margin-pct" style="color:var(--red)">21.5%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-caution">출혈 주의</span></td>
+        </tr>
+        <tr>
+          <td><span class="price">8,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-orange">하위 10.8% · 저가 영역</span></td>
+          <td><span class="cost">6,200원</span></td>
+          <td><span class="margin-val">2,700원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-mid" style="width:30.3%"></div></div>
+              <span class="margin-pct" style="color:var(--orange)">30.3%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-compete">경쟁우위</span></td>
+        </tr>
+        <tr style="background: rgba(74,222,128,0.04)">
+          <td><span class="price" style="color:var(--green)">9,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-yellow">하위 16.9% · 저가~중간</span></td>
+          <td><span class="cost">6,200원</span></td>
+          <td><span class="margin-val" style="color:var(--green)">3,700원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-high" style="width:37.3%"></div></div>
+              <span class="margin-pct" style="color:var(--green)">37.3%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-recommend">⭐ 추천</span></td>
+        </tr>
+        <tr>
+          <td><span class="price">10,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-blue">하위 23.1% · 중간 이하</span></td>
+          <td><span class="cost">6,200원</span></td>
+          <td><span class="margin-val">4,700원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-best" style="width:43.1%"></div></div>
+              <span class="margin-pct" style="color:var(--yellow)">43.1%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-margin">마진 중심</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 2kg 섹션 -->
+<div class="section">
+  <div class="section-header">
+    <span class="weight" style="color:var(--blue)">2kg</span>
+    <span class="cost-info">원가 <span>9,800원</span> &nbsp;·&nbsp; OEM <span>7,200원</span> + 택배 <span>2,600원</span></span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>판매가</th>
+          <th>시장 위치</th>
+          <th>총 원가</th>
+          <th>1차 마진</th>
+          <th>마진율</th>
+          <th>전략</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="price">10,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-red">하위 2.1% · 압도적 최저가</span></td>
+          <td><span class="cost">9,800원</span></td>
+          <td><span class="margin-val">1,100원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-low" style="width:10.1%"></div></div>
+              <span class="margin-pct" style="color:var(--red)">10.1%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-caution">출혈 주의</span></td>
+        </tr>
+        <tr>
+          <td><span class="price">11,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-orange">하위 6.4% · 초저가 영역</span></td>
+          <td><span class="cost">9,800원</span></td>
+          <td><span class="margin-val">2,100원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-mid" style="width:17.6%"></div></div>
+              <span class="margin-pct" style="color:var(--orange)">17.6%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-bait">미끼 상품</span></td>
+        </tr>
+        <tr>
+          <td><span class="price">12,900원</span></td>
+          <td style="text-align:right"><span class="badge badge-blue">하위 31.9% · 중간 이하</span></td>
+          <td><span class="cost">9,800원</span></td>
+          <td><span class="margin-val">3,100원</span></td>
+          <td>
+            <div class="margin-cell">
+              <div class="margin-bar-wrap"><div class="margin-bar bar-high" style="width:24.0%"></div></div>
+              <span class="margin-pct" style="color:var(--yellow)">24.0%</span>
+            </div>
+          </td>
+          <td><span class="strategy s-multi">경쟁 다수</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>
