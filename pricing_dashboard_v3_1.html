@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>데일리김치 판매가 검토 대시보드</title>
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#efefed;
+  --border:#e3e3e1;--border2:#d0d0ce;
+  --text:#1a1a18;--text2:#6b6b68;--text3:#9b9b98;
+  --blue:#185FA5;--blue-bg:#EBF3FB;--blue-text:#185FA5;
+  --green:#2D7D3A;--green-bg:#EBF5EC;--green-text:#2D7D3A;
+  --orange:#C4622D;--orange-bg:#FDF0EA;--orange-text:#C4622D;
+  --warn:#EF9F27;--warn-bg:#FEF7EC;--warn-text:#9A6317;
+  --red:#C03030;
+  --radius:6px;--radius-lg:10px;
+  --shadow:0 1px 4px rgba(0,0,0,.07);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-size:13px;min-height:100vh}
+.page{max-width:860px;margin:0 auto;padding:1.5rem 1.25rem 3rem}
+.page-title{font-size:20px;font-weight:700;margin-bottom:.25rem}
+.page-sub{font-size:12px;color:var(--text2);margin-bottom:1.25rem}
+.cost-note{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:.65rem .9rem}
+.cn-item{font-size:11px;color:var(--text2)}
+.cn-item b{color:var(--text)}
+
+/* TABS */
+.top-tabs{display:flex;gap:6px;margin-bottom:1rem}
+.ttab{padding:6px 18px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;background:transparent;color:var(--text2);font-weight:400;transition:all .15s}
+.ttab.on{background:var(--blue-bg);color:var(--blue-text);border-color:transparent;font-weight:600}
+.pp{display:none}.pp.on{display:block}
+.sku-tabs{display:flex;gap:6px;margin-bottom:1rem}
+.stab{padding:5px 14px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;background:transparent;color:var(--text2);transition:all .15s}
+.stab.on{background:var(--bg3);color:var(--text);border-color:var(--border2);font-weight:600}
+.sp{display:none}.sp.on{display:block}
+
+/* COST BREAKDOWN */
+.cb{background:var(--bg2);border-radius:var(--radius-lg);padding:.7rem .9rem;margin-bottom:.9rem;border:0.5px solid var(--border)}
+.cb-t{font-size:11px;color:var(--text2);margin-bottom:.4rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.cb-row{display:flex;justify-content:space-between;font-size:12px;padding:2.5px 0;color:var(--text2)}
+.cb-row b{color:var(--text)}
+.cb-total{display:flex;justify-content:space-between;font-size:13px;font-weight:600;border-top:0.5px solid var(--border);padding-top:5px;margin-top:5px}
+
+/* MARKET POSITION TRACK */
+.track-wrap{margin-bottom:2.8rem;position:relative}
+.track-label{font-size:11px;color:var(--text2);margin-bottom:.35rem;font-weight:500}
+.legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.45rem}
+.ld-item{font-size:10px;color:var(--text2);display:flex;align-items:center;gap:3px}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.track{position:relative;height:28px;background:var(--bg3);border-radius:4px;overflow:visible}
+.seg{position:absolute;top:0;height:100%}
+.axis-tick{position:absolute;bottom:-32px;font-size:9px;color:var(--text3);transform:translateX(-50%);text-align:center;line-height:1.4}
+.axis-tick b{display:block;color:var(--text2)}
+
+/* OPTION CARDS */
+.opt-grid{display:grid;gap:10px;margin-top:.5rem;margin-bottom:.75rem}
+.opt-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:.8rem 1rem;background:var(--bg);box-shadow:var(--shadow)}
+.opt-card.best{border:2px solid var(--blue);background:var(--blue-bg)}
+.opt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.opt-price{font-size:20px;font-weight:700}
+.opt-tag{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:500}
+.tag-hi{background:var(--green-bg);color:var(--green-text)}
+.tag-mid{background:var(--blue-bg);color:var(--blue-text)}
+.tag-lo{background:var(--warn-bg);color:var(--warn-text)}
+.tag-warn{background:var(--orange-bg);color:var(--orange-text)}
+.det-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:.6rem}
+.det{background:var(--bg2);border-radius:var(--radius);padding:.45rem .5rem;text-align:center}
+.det-l{font-size:10px;color:var(--text2);margin-bottom:2px}
+.det-v{font-size:13px;font-weight:600}
+.det-v.g{color:var(--green)}
+.det-v.w{color:var(--warn)}
+.det-v.r{color:var(--red)}
+.ref-row{font-size:10px;color:var(--text3);padding-top:.4rem;border-top:.5px solid var(--border)}
+
+/* INSIGHT */
+.insight{background:var(--bg2);border-left:3px solid var(--blue);border-radius:0 var(--radius) var(--radius) 0;padding:.6rem .85rem;font-size:12px;line-height:1.65;color:var(--text);margin-top:.75rem}
+.insight.warn{border-left-color:var(--warn)}
+
+/* FOOTER */
+.footer{margin-top:2.5rem;padding-top:1rem;border-top:.5px solid var(--border);font-size:11px;color:var(--text3);text-align:center}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-title">데일리김치 · 판매가 옵션 검토</div>
+  <div class="page-sub">묵은지 · 배추김치 전 SKU 가격 시뮬레이션 — 부자재비·플랫폼 수수료 반영 기준</div>
+
+  <div class="cost-note">
+    <span class="cn-item">📦 <b>OEM 단가</b> 배송비 포함 공급가 기준</span>
+    <span class="cn-item">🏷 <b>부자재비</b> 200원 / 품목 (용량 무관)</span>
+    <span class="cn-item">💳 <b>플랫폼 수수료</b> 판매가의 5% 차감</span>
+    <span class="cn-item">📊 <b>시장 데이터</b> 네이버 쇼핑 관련도순 300개 (2026.06)</span>
+  </div>
+
+  <div class="top-tabs">
+    <button class="ttab on" onclick="switchProduct('muk')">묵은지</button>
+    <button class="ttab" onclick="switchProduct('pogi')">배추김치</button>
+  </div>
+
+  <div class="pp on" id="pp-muk">
+    <div class="sku-tabs">
+      <button class="stab on" onclick="switchSku('muk','3')">3kg</button>
+      <button class="stab" onclick="switchSku('muk','5')">5kg</button>
+      <button class="stab" onclick="switchSku('muk','10')">10kg</button>
+    </div>
+    <div id="muk-content"></div>
+  </div>
+
+  <div class="pp" id="pp-pogi">
+    <div class="sku-tabs">
+      <button class="stab on" onclick="switchSku('pogi','3')">3kg</button>
+      <button class="stab" onclick="switchSku('pogi','5')">5kg</button>
+      <button class="stab" onclick="switchSku('pogi','10')">10kg</button>
+    </div>
+    <div id="pogi-content"></div>
+  </div>
+
+  <div class="footer">데일리김치 (데일리김치) · 내부 검토용 자료 · 2026.06</div>
+</div>
+
+<script>
+const DATA = {
+  muk: {
+    '3': {
+      oemCost:12800, subMat:200, platform:0.05,
+      options:[20900,21900,22900],
+      market:{min:16740,q1:21405,median:24940,q3:31000},
+      brandMedian:25950, generalMedian:24940,
+      insight:'묵은지 3kg 경쟁 군집은 <b>20,000~25,000원</b>에 집중. 20,900원은 Q1 바로 아래로 최저가 포지션, 22,900원은 경쟁 군집 상단으로 브랜드 이미지 방어에 유리.'
+    },
+    '5': {
+      oemCost:19500, subMat:200, platform:0.05,
+      options:[30900,31900],
+      market:{min:22130,q1:29900,median:34900,q3:39860},
+      brandMedian:34950, generalMedian:30970,
+      insight:'묵은지 5kg은 30~35,000원 구간이 핵심 경쟁군. 30,900원은 Q1 수준, 31,900원은 일반판매자 중앙값(30,970원) 바로 위로 가성비+마진 균형 포지션.'
+    },
+    '10': {
+      oemCost:36000, subMat:200, platform:0.05,
+      options:[55900,54900],
+      market:{min:33920,q1:48825,median:54310,q3:63520},
+      brandMedian:58400, generalMedian:50250,
+      insight:'묵은지 10kg은 시장 가격이 높게 형성되어 마진 여유가 큽니다. 54,900원은 중앙값(54,310원)과 거의 일치하며 심리적 가격 매력이 55,900원 대비 높음. <b>54,900원 추천.</b>'
+    }
+  },
+  pogi: {
+    '3': {
+      oemCost:12000, subMat:200, platform:0.05,
+      options:[18900,19900,20900],
+      market:{min:16630,q1:19898,median:25605,q3:32568},
+      brandMedian:24000, generalMedian:26000,
+      insight:'배추김치 3kg은 표본이 14개로 가격 분포가 넓습니다. 18,900원은 Q1 수준 최저가 진입, 20,900원은 Q1 위로 마진이 더 안정적. 초기 리뷰 확보 목적이라면 18,900~19,900원, 정상 운영이라면 20,900원.'
+    },
+    '5': {
+      oemCost:18000, subMat:200, platform:0.05,
+      options:[28900,29900,31900],
+      market:{min:18000,q1:28500,median:33560,q3:39600},
+      brandMedian:32000, generalMedian:34450,
+      insight:'배추김치 5kg 핵심 경쟁군은 30~35,000원. 28,900원은 Q1 바로 위 가성비 포지션. 29,900원~31,900원은 브랜드숍 중앙값(32,000원) 근방으로 마진과 포지션 균형이 좋습니다.'
+    },
+    '10': {
+      oemCost:34000, subMat:200, platform:0.05,
+      options:[42900,47900,52900],
+      market:{min:29510,q1:37370,median:43900,q3:54550},
+      brandMedian:46740, generalMedian:39825,
+      insight:'⚠ 원가 34,200원 대비 Q1이 37,370원으로 마진 여유가 가장 적습니다. 42,900원은 수수료 후 실질 마진 6,655원(16%)으로 CS·반품 발생 시 리스크. <b>47,900원 이상 강력 권장.</b>'
+    }
+  }
+};
+
+const state = { product:'muk', sku:{ muk:'3', pogi:'3' } };
+const COLORS = ['#185FA5','#0C447C','#6BAEF2'];
+
+function fmt(n){ return Number(n).toLocaleString('ko-KR')+'원'; }
+
+function pct(v,mn,mx){ return Math.max(0,Math.min(100,((v-mn)/(mx-mn))*100)); }
+
+function calc(price,d){
+  const cost = d.oemCost + d.subMat;
+  const fee = Math.round(price * d.platform);
+  const margin = price - cost - fee;
+  const rate = ((margin/price)*100).toFixed(1);
+  return { cost, fee, margin, rate };
+}
+
+function posLabel(price,d){
+  const m = d.market;
+  if(price < m.q1)   return { text:'Q1 이하 · 저가 포지션', cls:'tag-lo' };
+  if(price < m.median) return { text:'Q1~중앙값 · 경쟁 가성비', cls:'tag-mid' };
+  if(price < m.q3)   return { text:'중앙값~Q3 · 안정 포지션', cls:'tag-hi' };
+  return { text:'Q3 이상 · 프리미엄', cls:'tag-hi' };
+}
+
+function renderSku(product, kg){
+  const d = DATA[product][kg];
+  const m = d.market;
+  const cost = d.oemCost + d.subMat;
+  const dispMin = Math.floor(m.min * 0.95);
+  const dispMax = Math.ceil(m.q3 * 1.18);
+
+  // cost breakdown
+  let h = `<div class="cb">
+    <div class="cb-t">원가 구성</div>
+    <div class="cb-row"><span>OEM 공급단가 (배송포함)</span><span><b>${fmt(d.oemCost)}</b></span></div>
+    <div class="cb-row"><span>부자재비 (품목당 고정)</span><span><b>${fmt(d.subMat)}</b></span></div>
+    <div class="cb-total"><span>총 원가</span><span>${fmt(cost)}</span></div>
+  </div>`;
+
+  // market track
+  const segs = [
+    {from:m.min,to:m.q1,color:'#DCEFD8'},
+    {from:m.q1,to:m.median,color:'#A8D5A8'},
+    {from:m.median,to:m.q3,color:'#5BA85B'},
+  ];
+  h += `<div class="track-wrap">
+    <div class="legend-row">
+      <div class="ld-item"><div class="ld" style="background:#DCEFD8"></div>최솟값~Q1</div>
+      <div class="ld-item"><div class="ld" style="background:#A8D5A8"></div>Q1~중앙값</div>
+      <div class="ld-item"><div class="ld" style="background:#5BA85B"></div>중앙값~Q3</div>
+      <div class="ld-item"><div class="ld" style="background:#D85A30;border-radius:50%"></div>총원가선</div>
+      <div class="ld-item"><div class="ld" style="background:#185FA5;border-radius:50%"></div>가격 옵션</div>
+    </div>
+    <div class="track-label">시장 가격 분포 (배송비 합산)</div>
+    <div class="track">`;
+
+  segs.forEach(s=>{
+    const l=pct(s.from,dispMin,dispMax), r=pct(s.to,dispMin,dispMax);
+    h+=`<div class="seg" style="left:${l}%;width:${r-l}%;background:${s.color}"></div>`;
+  });
+
+  // 원가선
+  const cp = pct(cost,dispMin,dispMax);
+  h+=`<div style="position:absolute;left:${cp}%;top:-6px;height:40px;width:2px;background:#D85A30;z-index:6">
+    <div style="position:absolute;top:-20px;font-size:9px;color:#D85A30;white-space:nowrap;transform:translateX(-50%);font-weight:600">원가<br>${fmt(cost)}</div>
+  </div>`;
+
+  // 가격 옵션 마커
+  d.options.forEach((price,i)=>{
+    const pp=pct(price,dispMin,dispMax);
+    const top = i%2===0 ? '-44px' : '-60px';
+    h+=`<div style="position:absolute;left:${pp}%;top:0;height:28px;width:2.5px;background:${COLORS[i]};z-index:7">
+      <div style="position:absolute;top:${top};font-size:10px;white-space:nowrap;transform:translateX(-50%);color:${COLORS[i]};font-weight:700;background:white;padding:0 2px;border-radius:2px">${fmt(price)}</div>
+    </div>`;
+  });
+
+  // 축 라벨
+  [{v:m.min,l:'최솟값'},{v:m.q1,l:'Q1'},{v:m.median,l:'중앙값'},{v:m.q3,l:'Q3'}].forEach(a=>{
+    const pp=pct(a.v,dispMin,dispMax);
+    h+=`<div class="axis-tick" style="left:${pp}%">${a.l}<b>${fmt(a.v)}</b></div>`;
+  });
+
+  h+=`</div></div>`; // close track, track-wrap
+
+  // option cards
+  h+=`<div class="opt-grid" style="grid-template-columns:repeat(${d.options.length},1fr)">`;
+  d.options.forEach((price,i)=>{
+    const c=calc(price,d);
+    const pos=posLabel(price,d);
+    const isWarn = c.margin < 6000;
+    const isLow = parseFloat(c.rate) < 25;
+    const isBest = i===d.options.length-1;
+    h+=`<div class="opt-card${isBest?' best':''}">
+      <div class="opt-head">
+        <div class="opt-price" style="color:${COLORS[i]}">${fmt(price)}</div>
+        <span class="opt-tag ${pos.cls}">${pos.text}</span>
+      </div>
+      <div class="det-grid">
+        <div class="det"><div class="det-l">총 원가</div><div class="det-v">${fmt(c.cost)}</div></div>
+        <div class="det"><div class="det-l">수수료 (5%)</div><div class="det-v">${fmt(c.fee)}</div></div>
+        <div class="det"><div class="det-l">실질 마진</div><div class="det-v ${isWarn?'r':isLow?'w':'g'}">${fmt(c.margin)}</div></div>
+        <div class="det"><div class="det-l">마진율</div><div class="det-v ${isWarn?'r':isLow?'w':'g'}">${c.rate}%</div></div>
+      </div>
+      <div class="ref-row">브랜드숍 중앙값 ${fmt(d.brandMedian)} / 일반판매자 중앙값 ${fmt(d.generalMedian)}</div>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  // insight
+  const isWarnSku = product==='pogi'&&kg==='10';
+  h+=`<div class="insight${isWarnSku?' warn':''}">${d.insight}</div>`;
+
+  return h;
+}
+
+function render(){
+  const p=state.product, kg=state.sku[p];
+  document.getElementById(`${p}-content`).innerHTML=renderSku(p,kg);
+}
+
+function switchProduct(p){
+  state.product=p;
+  document.querySelectorAll('.ttab').forEach((t,i)=>t.classList.toggle('on',['muk','pogi'][i]===p));
+  document.querySelectorAll('.pp').forEach(el=>el.classList.toggle('on',el.id==='pp-'+p));
+  render();
+}
+
+function switchSku(product,kg){
+  state.sku[product]=kg;
+  const panel=document.getElementById('pp-'+product);
+  panel.querySelectorAll('.stab').forEach((t,i)=>t.classList.toggle('on',['3','5','10'][i]===kg));
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
